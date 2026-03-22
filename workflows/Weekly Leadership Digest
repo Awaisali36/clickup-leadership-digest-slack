@@ -1,0 +1,787 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        1168
+      ],
+      "id": "6e9f2965-be9f-4aea-a750-902f54a79e80"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0A6A26UD7W",
+          "mode": "id"
+        },
+        "text": "=📊 *Weekly Project Digest*\n_Week of {{ $now.format('MMM d, yyyy') }}_\n\n*📌 Summary:*\n*{{ $('Convert Transcript to SOP').item.json.content[0].text }}*\n\n---\n\n*Quick Stats:*\n✅ *Completed:* {{ $('Get Total Count').item.json.completedCount }}\n🔄 *In Progress:* {{ $('Get Total Count').item.json.onTrackCount }}\n⏳ *at Risk :* {{ $('Get Total Count').item.json.atRiskCount }}\n\n*Detailed Stats:*\n\n⏳ *at Risk :*\n{{ $json.slackMessage }}\n\n---\n_Auto-generated every Monday at 8 AM_\n",
+        "otherOptions": {}
+      },
+      "name": "Slack - Post Digest",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        912
+      ],
+      "id": "3d6f1e68-4ac1-4a3e-8f16-c85725d62bae",
+      "webhookId": "8fc6554e-eaf8-4a60-ac07-2fe1ab65c81e",
+      "credentials": {
+        "slackApi": {
+          "id": "jq1RKlVUgzZGT841",
+          "name": "Reprise Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "team": "9013688424",
+        "space": "901311288074",
+        "folderless": true,
+        "list": "={{ $json.id }}",
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        544,
+        1264
+      ],
+      "id": "139b6efc-cd7c-46d8-9c8c-5858334a6df3",
+      "name": "Get many tasks",
+      "alwaysOutputData": true,
+      "credentials": {
+        "clickUpApi": {
+          "id": "GiJwVqTWEhxRjjYE",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-sonnet-4-20250514",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Data:\n- On Track: {{ $json.onTrackCount }}\n- At Risk (Waiting on Client): {{ $json.atRiskCount }}\n- Completed: {{ $json.completedCount }}\n\nAt-risk projects:\n{{ JSON.stringify($json.atRiskProjects, null, 2) }}\n\nCompleted this week:\n{{ JSON.stringify($json.completedProjects, null, 2) }}\n\nWrite a 3-paragraph summary:\n1) Overall health (one sentence)\n2) Wins from the week\n3) Items that need attention\n\nBe direct. No fluff. Under 150 words.\n"
+            }
+          ]
+        },
+        "options": {
+          "system": "You are a business analyst writing a weekly executive digest. Be direct, highlight wins and concerns, keep it under 200 words."
+        }
+      },
+      "id": "41f7f133-10ca-42cd-9bde-fe8cca1c4299",
+      "name": "Convert Transcript to SOP",
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        912
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": "iLi5LpPyChzRDvmZ",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        912
+      ],
+      "id": "f033587f-ea24-4fc0-94f6-80cbf73a5ab4",
+      "name": "No Operation, do nothing",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "list",
+        "operation": "getAll",
+        "team": "9013688424",
+        "space": "901311288074",
+        "folderless": true,
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        96,
+        1264
+      ],
+      "id": "2398eacb-e602-45c5-a7ca-8ff3dbe2bcb9",
+      "name": "Get many lists",
+      "credentials": {
+        "clickUpApi": {
+          "id": "OFi5uSIbcjTVxgTB",
+          "name": "Keshav Clickup Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        320,
+        1264
+      ],
+      "id": "af9b32d1-ab50-476b-bf5c-37d715f51826",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "732ef788-0f26-447b-bb3b-13f0fc0e52b0",
+              "leftValue": "={{ $json.date_updated.toString().toDateTime(\"ms\").toFormat(\"yyyy-MM-dd\") }}\n",
+              "rightValue": "=\n{{ $now.minus(7, 'days').format('yyyy-MM-dd') }}\n",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        768,
+        1264
+      ],
+      "id": "07ebec34-ee05-4b35-9750-72719ab2ed15",
+      "name": "If",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "getAll",
+        "team": "9013688424",
+        "space": "901311288074",
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        912
+      ],
+      "id": "e463a53a-b551-453e-ad70-92ac6df4259a",
+      "name": "Get many folders",
+      "credentials": {
+        "clickUpApi": {
+          "id": "OFi5uSIbcjTVxgTB",
+          "name": "Keshav Clickup Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        912
+      ],
+      "id": "48c788e8-87c6-4191-bb29-2df1f031c792",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "batchSize": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        64,
+        912
+      ],
+      "id": "17ff6ce4-a6aa-43a2-9af3-a3daa1d749c2",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        1024
+      ],
+      "id": "d85899bf-ba7f-400d-bdeb-bba1261ac1e0",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "get",
+        "team": "9013688424",
+        "space": "901311288074",
+        "folder": "={{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        32,
+        640
+      ],
+      "id": "b538af9d-2c78-48c1-b585-ecb62caa19f5",
+      "name": "Get a folder",
+      "alwaysOutputData": true,
+      "credentials": {
+        "clickUpApi": {
+          "id": "OFi5uSIbcjTVxgTB",
+          "name": "Keshav Clickup Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst onTrack = [];\nconst atRisk = [];\nconst completed = [];\n\nfor (const item of items) {\n  const t = item.json;\n  const status = (t.status?.status || \"\").toLowerCase();\n\n  const entry = {\n    client: t.list?.name || \"Unknown\",\n    name: t.name,\n    status: t.status?.status || \"\",\n    url: t.url,\n  };\n\n  // Completed\n  if (status === \"signed & accepted\" || status === \"go-live phase\") {\n    completed.push(entry);\n  }\n  // Needs attention\n  else if (status === \"waiting on client\") {\n    atRisk.push(entry);\n  }\n  // Everything else\n  else {\n    onTrack.push(entry);\n  }\n}\n\nreturn [{\n  json: {\n    onTrackCount: onTrack.length,\n    atRiskCount: atRisk.length,\n    completedCount: completed.length,\n    atRiskProjects: atRisk,\n    completedProjects: completed.slice(0, 5),\n    onTrack: onTrack.slice(0, 5),\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1008,
+        1248
+      ],
+      "id": "2df055fb-fefc-4b1b-81cd-028c8e493607",
+      "name": "Data from lists"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input\nconst input = $input.first().json;\nconst totalItems = input.totalitems || [];\n\n// Final accumulators\nlet completed = [];\nlet atRisk = [];\nlet onTrack = [];\n\nlet completedCount = 0;\nlet atRiskCount = 0;\nlet onTrackCount = 0;\n\n// Loop through each item\ntotalItems.forEach(item => {\n    completedCount += item.completedCount || 0;\n    atRiskCount += item.atRiskCount || 0;\n    onTrackCount += item.onTrackCount || 0;\n\n    completed.push(...(item.completedProjects || []));\n    atRisk.push(...(item.atRiskProjects || []));\n    onTrack.push(...(item.onTrack || []));\n});\n\n// Optional: remove duplicates by URL (recommended)\nconst dedupeByUrl = arr =>\n    Array.from(new Map(arr.map(o => [o.url, o])).values());\n\ncompleted = dedupeByUrl(completed);\natRisk = dedupeByUrl(atRisk);\nonTrack = dedupeByUrl(onTrack);\n\n// Return final result\nreturn [{\n    json: {\n        completedCount: completed.length,\n        atRiskCount: atRisk.length,\n        onTrackCount: onTrack.length,\n\n        completed,\n        atRisk,\n        onTrack\n    }\n}];\n"
+      },
+      "name": "Data from Folders",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        896
+      ],
+      "id": "c234f38e-62c5-4105-9b5c-3e0d86fd42a0"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "id",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        480,
+        640
+      ],
+      "id": "b490dc83-ea19-4ed1-ae97-579889f1b5e8",
+      "name": "Split Out2"
+    },
+    {
+      "parameters": {
+        "resource": "list",
+        "operation": "getAll",
+        "team": "9013688424",
+        "space": "901311288074",
+        "folder": "={{ $json.id }}",
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        256,
+        640
+      ],
+      "id": "24413ec2-434d-4a9b-872e-2e7c0683d452",
+      "name": "Get list of that folder",
+      "alwaysOutputData": true,
+      "credentials": {
+        "clickUpApi": {
+          "id": "OFi5uSIbcjTVxgTB",
+          "name": "Keshav Clickup Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "team": "9013688424",
+        "space": "901311288074",
+        "folder": "={{ $('Get a folder').item.json.id }}",
+        "list": "={{ $json.id }}",
+        "filters": {
+          "dateUpdatedGt": "=\n{{ $now.minus(7, 'days').format('yyyy-MM-dd') }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        704,
+        640
+      ],
+      "id": "1bc3150a-c5fd-4a44-a341-fd2f421323fc",
+      "name": "Get tasks of that list",
+      "alwaysOutputData": true,
+      "credentials": {
+        "clickUpApi": {
+          "id": "OFi5uSIbcjTVxgTB",
+          "name": "Keshav Clickup Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst onTrack = [];\nconst atRisk = [];\nconst completed = [];\n\nfor (const item of items) {\n  const t = item.json;\n  const status = (t.status?.status || \"\").toLowerCase();\n\n  const entry = {\n    client: t.list?.name || \"Unknown\",\n    name: t.name,\n    status: t.status?.status || \"\",\n    url: t.url,\n  };\n\n  // Completed\n  if (status === \"signed & accepted\" || status === \"go-live phase\") {\n    completed.push(entry);\n  }\n  // Needs attention\n  else if (status === \"waiting on client\") {\n    atRisk.push(entry);\n  }\n  // Everything else\n  else {\n    onTrack.push(entry);\n  }\n}\n\nreturn [{\n  json: {\n    onTrackCount: onTrack.length,\n    atRiskCount: atRisk.length,\n    completedCount: completed.length,\n    atRiskProjects: atRisk,\n    completedProjects: completed.slice(0, 5),\n    onTrack: onTrack.slice(0, 5),\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        640
+      ],
+      "id": "c128b6d1-e32f-49fd-8aad-add5bc239d2f",
+      "name": "Count"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      totalitems: items.map(item => item.json)\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        896
+      ],
+      "id": "8df61b71-1743-4622-bd89-dc0f86b1467d",
+      "name": "Convert the data to single array"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get data from previous nodes\nconst listsData = $('Data from lists').first().json;\nconst foldersData = $('Data from Folders').first().json;\n\n// Merge arrays\nlet completed = [\n    ...(listsData.completed || []),\n    ...(foldersData.completed || [])\n];\n\nlet atRisk = [\n    ...(listsData.atRisk || []),\n    ...(foldersData.atRisk || [])\n];\n\nlet onTrack = [\n    ...(listsData.onTrack || []),\n    ...(foldersData.onTrack || [])\n];\n\n// Remove duplicates\ncompleted = [...new Set(completed)];\natRisk = [...new Set(atRisk)];\nonTrack = [...new Set(onTrack)];\n\n// Return combined result\nreturn [{\n    json: {\n        completedCount: completed.length,\n        atRiskCount: atRisk.length,\n        onTrackCount: onTrack.length,\n\n        completed,\n        atRisk,\n        onTrack\n    }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        912
+      ],
+      "id": "0bf30c03-7253-4a8e-98fc-52e47a76f556",
+      "name": "Get Total Count"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        784,
+        912
+      ],
+      "id": "3f5d22b6-b41a-451f-b7b7-e56fdaa671aa",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        1264
+      ],
+      "id": "1a726ec2-4898-4247-963a-84182aa0b84f",
+      "name": "Wait",
+      "webhookId": "81d7e6ac-fbdf-4a5e-8560-3cecb7f8d43a"
+    },
+    {
+      "parameters": {
+        "jsCode": "const atRisk = $('Get Total Count').first().json.atRisk || [];\n\nif (atRisk.length === 0) {\n  return [{\n    json: {\n      slackMessage: \"*⚠️ At-Risk Projects*\\nNo at-risk projects found.\"\n    }\n  }];\n}\n\nlet message = \"*⚠️ At-Risk Projects*\\n\\n\";\n\natRisk.forEach((item, index) => {\n  message += `*${index + 1}. ${item.name}*\\n`;\n  message += `• Client: ${item.client}\\n`;\n  message += `• Status: ${item.status}\\n`;\n  message += `• Link: <${item.url}|Open in ClickUp>\\n\\n`;\n});\n\nreturn [{\n  json: {\n    slackMessage: message\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        912
+      ],
+      "id": "cdd3dcf3-6a40-425b-9a98-5beed88ecabc",
+      "name": "Slack Message"
+    },
+    {
+      "parameters": {
+        "content": "## Get Projects From the Folders which were updated in last 7 days",
+        "height": 224,
+        "width": 1408
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        576
+      ],
+      "id": "7a226aa5-750d-49b8-8c21-cc41833fbad3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Get the projects that are not listed in folders",
+        "height": 336,
+        "width": 1376,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        1168
+      ],
+      "id": "40af1ebd-dd2c-4f9e-91c9-f47cd9cd4cd1",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Use Claude to get the weekly insights and send message to slack",
+        "height": 336,
+        "width": 1200,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1264,
+        816
+      ],
+      "id": "1325b49a-52a4-4dae-9baa-0778338a232d",
+      "name": "Sticky Note2"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many folders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack - Post Digest": {
+      "main": [
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many tasks": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Transcript to SOP": {
+      "main": [
+        [
+          {
+            "node": "Slack Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many lists": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Get many tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Data from lists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many folders": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Convert the data to single array",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get a folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get many folders",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a folder": {
+      "main": [
+        [
+          {
+            "node": "Get list of that folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data from lists": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Data from Folders": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out2": {
+      "main": [
+        [
+          {
+            "node": "Get tasks of that list",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get list of that folder": {
+      "main": [
+        [
+          {
+            "node": "Split Out2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get tasks of that list": {
+      "main": [
+        [
+          {
+            "node": "Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Count": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert the data to single array": {
+      "main": [
+        [
+          {
+            "node": "Data from Folders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Total Count": {
+      "main": [
+        [
+          {
+            "node": "Convert Transcript to SOP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Get Total Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get many lists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Message": {
+      "main": [
+        [
+          {
+            "node": "Slack - Post Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Schedule Trigger": [
+      {
+        "timestamp": "2025-12-30T10:31:34.019-05:00",
+        "Readable date": "December 30th 2025, 10:31:34 am",
+        "Readable time": "10:31:34 am",
+        "Day of week": "Tuesday",
+        "Year": "2025",
+        "Month": "December",
+        "Day of month": "30",
+        "Hour": "10",
+        "Minute": "31",
+        "Second": "34",
+        "Timezone": "America/New_York (UTC-05:00)"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f91dc7df1efe0781f58b1cf5d0bf39bf4861046fb2bcd9901d1cd366fb7c5ffe"
+  }
+}
